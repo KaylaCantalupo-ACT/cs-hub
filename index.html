@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Customer Service Hub</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="brand">Customer Service Hub</p>
+    <p class="sub">Internal support metrics. Data from Gorgias, Jan 2025–present.</p>
+    <nav class="tabs" id="nav"></nav>
+  </header>
+
+  <h1>Overview</h1>
+  <p class="lede">A snapshot of 2025 full-year performance against 2026 year-to-date, plus the ticket volume trend since January 2025.</p>
+
+  <h2>2025 (full year)</h2>
+  <div class="grid" id="cards2025"></div>
+
+  <h2>2026 (year-to-date, vs. prior period)</h2>
+  <div class="grid" id="cards2026"></div>
+
+  <h2>Monthly ticket volume</h2>
+  <div class="chart-box">
+    <div id="trendChart"></div>
+  </div>
+
+  <div class="note">Workload and Customer Experience figures are point-in-time snapshots exported from Gorgias (current period vs. previous period), not a full monthly series. Ticket Volume is the only metric with true weekly/monthly granularity across the full Jan 2025–present range.</div>
+
+  <footer>Last refreshed {{GENERATED_AT}}</footer>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+renderNav("index.html");
+document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{GENERATED_AT}}", CS_DATA.generatedAt);
+
+function card(label, value, deltaHtml) {
+  return `<div class="card"><div class="label">${label}</div><div class="value">${value}</div>${deltaHtml || ""}</div>`;
+}
+
+const wl25 = CS_DATA.workload2025;
+const cx25 = CS_DATA.cx2025;
+document.getElementById("cards2025").innerHTML = [
+  card("Created tickets", wl25["Created tickets"].current, fmtDelta(Number(wl25["Created tickets"].current.replace(/,/g,"")), Number(wl25["Created tickets"].previous.replace(/,/g,"")))),
+  card("Closed tickets", wl25["Closed tickets"].current),
+  card("Average CSAT", cx25["Average CSAT"].current, fmtDelta(Number(cx25["Average CSAT"].current), Number(cx25["Average CSAT"].previous))),
+  card("First response time", cx25["First response time"].current, fmtDelta(parseDurationToMinutes(cx25["First response time"].current), parseDurationToMinutes(cx25["First response time"].previous), true)),
+  card("Resolution time", cx25["Resolution time"].current, fmtDelta(parseDurationToMinutes(cx25["Resolution time"].current), parseDurationToMinutes(cx25["Resolution time"].previous), true)),
+].join("");
+
+const wl26 = CS_DATA.workload2026ytd;
+const cx26 = CS_DATA.cx2026ytd;
+document.getElementById("cards2026").innerHTML = [
+  card("Created tickets", wl26["Created tickets"].current, fmtDelta(Number(wl26["Created tickets"].current.replace(/,/g,"")), Number(wl26["Created tickets"].previous.replace(/,/g,"")))),
+  card("Closed tickets", wl26["Closed tickets"].current),
+  card("Average CSAT", cx26["Average CSAT"].current, fmtDelta(Number(cx26["Average CSAT"].current), Number(cx26["Average CSAT"].previous))),
+  card("First response time", cx26["First response time"].current, fmtDelta(parseDurationToMinutes(cx26["First response time"].current), parseDurationToMinutes(cx26["First response time"].previous), true)),
+  card("Resolution time", cx26["Resolution time"].current, fmtDelta(parseDurationToMinutes(cx26["Resolution time"].current), parseDurationToMinutes(cx26["Resolution time"].previous), true)),
+].join("");
+
+const monthly = toMonthly(CS_DATA.weekly);
+renderLineChart("trendChart", monthly.map((m) => monthLabel(m.period)), [
+  { label: "Created", data: monthly.map((m) => m.created), color: CHART_COLORS.blue },
+  { label: "Closed", data: monthly.map((m) => m.closed), color: CHART_COLORS.greige },
+]);
+</script>
+</body>
+</html>

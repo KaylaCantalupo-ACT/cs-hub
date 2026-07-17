@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Ticket Volume — Customer Service Hub</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="brand">Customer Service Hub</p>
+    <p class="sub">Internal support metrics. Data from Gorgias, Jan 2025–present.</p>
+    <nav class="tabs" id="nav"></nav>
+  </header>
+
+  <h1>Ticket Volume</h1>
+  <p class="lede">Created, closed, replied tickets and messages sent — the only metric with full weekly granularity across the whole range.</p>
+
+  <div class="toggle-row" id="toggle">
+    <button data-view="weekly" class="active">Weekly</button>
+    <button data-view="monthly">Monthly</button>
+    <button data-view="yearly">Yearly</button>
+  </div>
+
+  <div class="chart-box">
+    <div id="volChart"></div>
+  </div>
+
+  <h2 id="tableTitle">Weekly detail</h2>
+  <table id="volTable">
+    <thead><tr><th>Period</th><th>Created</th><th>Closed</th><th>Replied</th><th>Messages sent</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <footer>Last refreshed {{GENERATED_AT}}</footer>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+renderNav("volume.html");
+document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{GENERATED_AT}}", CS_DATA.generatedAt);
+
+const weekly = CS_DATA.weekly;
+const monthly = toMonthly(weekly);
+const yearly = toYearly(weekly);
+
+function labelFor(view, row) {
+  if (view === "weekly") return row.date;
+  if (view === "monthly") return monthLabel(row.period);
+  return row.period;
+}
+
+function render(view) {
+  const rows = view === "weekly" ? weekly : view === "monthly" ? monthly : yearly;
+  const labels = rows.map((r) => labelFor(view, r));
+
+  renderBarChart("volChart", labels, [
+    { label: "Created", data: rows.map((r) => r.created), color: CHART_COLORS.blue },
+    { label: "Closed", data: rows.map((r) => r.closed), color: CHART_COLORS.greige },
+  ]);
+
+  document.getElementById("tableTitle").textContent =
+    view === "weekly" ? "Weekly detail" : view === "monthly" ? "Monthly detail" : "Yearly detail";
+
+  document.querySelector("#volTable tbody").innerHTML = rows
+    .slice()
+    .reverse()
+    .map(
+      (r) =>
+        `<tr><td>${labelFor(view, r)}</td><td>${fmtNum(r.created)}</td><td>${fmtNum(r.closed)}</td><td>${fmtNum(r.replied)}</td><td>${fmtNum(r.messagesSent)}</td></tr>`
+    )
+    .join("");
+}
+
+document.getElementById("toggle").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  document.querySelectorAll("#toggle button").forEach((b) => b.classList.remove("active"));
+  btn.classList.add("active");
+  render(btn.dataset.view);
+});
+
+render("weekly");
+</script>
+</body>
+</html>

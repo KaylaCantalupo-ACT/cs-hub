@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Workload — Customer Service Hub</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="brand">Customer Service Hub</p>
+    <p class="sub">Internal support metrics. Data from Gorgias, Jan 2025–present.</p>
+    <nav class="tabs" id="nav"></nav>
+  </header>
+
+  <h1>Workload</h1>
+  <p class="lede">Ticket load, response speed, and channel mix — 2025 full year and 2026 year-to-date, each vs. the immediately prior period of equal length.</p>
+
+  <div class="note">These figures are point-in-time exports, not a monthly series — each period is "current vs. previous" as pulled from Gorgias.</div>
+
+  <h2>2025 (full year vs. prior year)</h2>
+  <div class="grid" id="cards2025"></div>
+
+  <h2>2026 (YTD vs. equivalent prior period)</h2>
+  <div class="grid" id="cards2026"></div>
+
+  <h2>Workload by channel</h2>
+  <div class="chart-box">
+    <div id="channelChart"></div>
+  </div>
+  <table id="channelTable">
+    <thead><tr><th>Channel</th><th>2025 tickets</th><th>2026 YTD tickets</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <footer>Last refreshed {{GENERATED_AT}}</footer>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+renderNav("workload.html");
+document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{GENERATED_AT}}", CS_DATA.generatedAt);
+
+function card(label, value, deltaHtml) {
+  return `<div class="card"><div class="label">${label}</div><div class="value">${value}</div>${deltaHtml || ""}</div>`;
+}
+function num(s) { return Number(String(s).replace(/,/g, "").replace("%", "")); }
+
+function buildCards(wl, targetId) {
+  document.getElementById(targetId).innerHTML = [
+    card("Created tickets", wl["Created tickets"].current, fmtDelta(num(wl["Created tickets"].current), num(wl["Created tickets"].previous))),
+    card("Closed tickets", wl["Closed tickets"].current, fmtDelta(num(wl["Closed tickets"].current), num(wl["Closed tickets"].previous))),
+    card("Open tickets", wl["Open tickets"].current, fmtDelta(num(wl["Open tickets"].current), num(wl["Open tickets"].previous), true)),
+    card("Avg response time", wl["Average response time"].current, fmtDelta(parseDurationToMinutes(wl["Average response time"].current), parseDurationToMinutes(wl["Average response time"].previous), true)),
+    card("One-touch tickets", wl["One touch tickets"].current, fmtDelta(num(wl["One touch tickets"].current), num(wl["One touch tickets"].previous))),
+    card("Messages received", wl["Messages received"].current, fmtDelta(num(wl["Messages received"].current), num(wl["Messages received"].previous))),
+  ].join("");
+}
+
+buildCards(CS_DATA.workload2025, "cards2025");
+buildCards(CS_DATA.workload2026ytd, "cards2026");
+
+const channelKeys2025 = Object.keys(CS_DATA.workload2025).filter((k) => k.startsWith("workload by channel"));
+const labels = channelKeys2025.map((k) => k.replace("workload by channel - ", ""));
+const vals2025 = channelKeys2025.map((k) => num(CS_DATA.workload2025[k].current));
+const vals2026 = channelKeys2025.map((k) => {
+  const entry = CS_DATA.workload2026ytd[k];
+  return entry ? num(entry.current) : 0;
+});
+
+renderHorizontalBarChart("channelChart", labels, [
+  { label: "2025 (full year)", data: vals2025, color: CHART_COLORS.blue },
+  { label: "2026 (YTD)", data: vals2026, color: CHART_COLORS.greige },
+]);
+
+document.querySelector("#channelTable tbody").innerHTML = labels
+  .map((l, i) => `<tr><td>${l}</td><td>${fmtNum(vals2025[i])}</td><td>${fmtNum(vals2026[i])}</td></tr>`)
+  .join("");
+</script>
+</body>
+</html>

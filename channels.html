@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Channels — Customer Service Hub</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="brand">Customer Service Hub</p>
+    <p class="sub">Internal support metrics. Data from Gorgias, Jan 2025–present.</p>
+    <nav class="tabs" id="nav"></nav>
+  </header>
+
+  <h1>Channels</h1>
+  <p class="lede">Ticket volume, CSAT, and response speed by support channel — 2025 full year.</p>
+
+  <div class="note">Only a 2025 full-year channel export is available. Pull a matching 2026 channels export from Gorgias and drop it into data.js to extend this view.</div>
+
+  <h2>Share of ticket volume by channel</h2>
+  <div class="chart-box">
+    <div id="shareChart"></div>
+  </div>
+
+  <h2>Channel detail</h2>
+  <table id="channelsTable">
+    <thead><tr><th>Channel</th><th>Created</th><th>% of total</th><th>CSAT</th><th>First response</th><th>Resolution time</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <footer>Last refreshed {{GENERATED_AT}}</footer>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+renderNav("channels.html");
+document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{GENERATED_AT}}", CS_DATA.generatedAt);
+
+const channels = CS_DATA.channels2025;
+const doughnutColors = ["#ABCAE9", "#EDEAE8", "#ABABAB", "#525252", "#9FE3B3", "#B7A99A", "#6F7273", "#B6ADA5", "#7A8FA6", "#D9D3CE", "#8C8C8C", "#4D4D4D", "#3A3A3A"];
+
+renderDoughnutChart(
+  "shareChart",
+  channels.map((c) => c.Channel),
+  channels.map((c) => Number(c["Created tickets"].replace(/,/g, ""))),
+  doughnutColors
+);
+
+document.querySelector("#channelsTable tbody").innerHTML = channels
+  .map(
+    (c) =>
+      `<tr><td>${c.Channel}</td><td>${c["Created tickets"]}</td><td>${c["% of created Tickets"]}</td><td>${c["Average CSAT"]}</td><td>${c["First response time"]}</td><td>${c["Resolution time"]}</td></tr>`
+  )
+  .join("");
+</script>
+</body>
+</html>

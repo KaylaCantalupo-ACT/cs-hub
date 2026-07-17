@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Customer Experience — Customer Service Hub</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="brand">Customer Service Hub</p>
+    <p class="sub">Internal support metrics. Data from Gorgias, Jan 2025–present.</p>
+    <nav class="tabs" id="nav"></nav>
+  </header>
+
+  <h1>Customer Experience</h1>
+  <p class="lede">Satisfaction and speed metrics — 2025 full year and 2026 year-to-date, each vs. the prior comparable period.</p>
+
+  <div class="note">Point-in-time snapshots from Gorgias — not a monthly trend line.</div>
+
+  <h2>2025 (full year vs. prior year)</h2>
+  <div class="grid" id="cards2025"></div>
+
+  <h2>2026 (YTD vs. equivalent prior period)</h2>
+  <div class="grid" id="cards2026"></div>
+
+  <h2>CSAT comparison</h2>
+  <div class="chart-box">
+    <div id="csatChart"></div>
+  </div>
+
+  <footer>Last refreshed {{GENERATED_AT}}</footer>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+renderNav("customer-experience.html");
+document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{GENERATED_AT}}", CS_DATA.generatedAt);
+
+function card(label, value, deltaHtml) {
+  return `<div class="card"><div class="label">${label}</div><div class="value">${value}</div>${deltaHtml || ""}</div>`;
+}
+
+function buildCards(cx, targetId) {
+  document.getElementById(targetId).innerHTML = [
+    card("Average CSAT", cx["Average CSAT"].current, fmtDelta(Number(cx["Average CSAT"].current), Number(cx["Average CSAT"].previous))),
+    card("First response time", cx["First response time"].current, fmtDelta(parseDurationToMinutes(cx["First response time"].current), parseDurationToMinutes(cx["First response time"].previous), true)),
+    card("Human response (post AI handoff)", cx["Human response time after AI handoff"].current, fmtDelta(parseDurationToMinutes(cx["Human response time after AI handoff"].current), parseDurationToMinutes(cx["Human response time after AI handoff"].previous), true)),
+    card("Resolution time", cx["Resolution time"].current, fmtDelta(parseDurationToMinutes(cx["Resolution time"].current), parseDurationToMinutes(cx["Resolution time"].previous), true)),
+    card("Messages per ticket", cx["Messages per ticket"].current, fmtDelta(Number(cx["Messages per ticket"].current), Number(cx["Messages per ticket"].previous), true)),
+  ].join("");
+}
+
+buildCards(CS_DATA.cx2025, "cards2025");
+buildCards(CS_DATA.cx2026ytd, "cards2026");
+
+renderBarChart("csatChart", ["2025 (prior yr)", "2025 (full year)", "2026 YTD (prior period)", "2026 YTD"], [
+  {
+    label: "Average CSAT",
+    data: [
+      Number(CS_DATA.cx2025["Average CSAT"].previous),
+      Number(CS_DATA.cx2025["Average CSAT"].current),
+      Number(CS_DATA.cx2026ytd["Average CSAT"].previous),
+      Number(CS_DATA.cx2026ytd["Average CSAT"].current),
+    ],
+    color: CHART_COLORS.blue,
+  },
+], { height: 240 });
+</script>
+</body>
+</html>
